@@ -16,9 +16,14 @@ function isValidPerson(payload: unknown): boolean {
 }
 
 export async function GET() {
-  await connectToDatabase();
-  const teams = await TeamModel.find({}).sort({ teamMark: -1, createdAt: 1 }).lean();
-  return NextResponse.json(teams);
+  try {
+    await connectToDatabase();
+    const teams = await TeamModel.find({}).sort({ teamMark: -1, createdAt: 1 }).lean();
+    return NextResponse.json(teams);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load teams.";
+    return NextResponse.json({ message }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {

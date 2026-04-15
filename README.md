@@ -25,16 +25,20 @@ npm install
 2. Add environment values:
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Then update `.env.local` with:
+Then update `.env` with:
 
 - MongoDB connection values
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD`
+- `MONGODB_URI`=mongodb+srv://url
+- `MONGODB_DB_NAME`=database_name
+  
+- Admin credentials
+- `ADMIN_USERNAME`=username
+- `ADMIN_PASSWORD`=password
 
-3. Run dev server:
+1. Run dev server:
 
 ```bash
 npm run dev

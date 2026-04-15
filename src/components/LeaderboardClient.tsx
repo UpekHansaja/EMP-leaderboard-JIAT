@@ -18,7 +18,8 @@ export function LeaderboardClient() {
       try {
         const response = await fetch("/api/teams", { cache: "no-store" });
         if (!response.ok) {
-          throw new Error("Failed to load leaderboard.");
+          const payload = (await response.json()) as { message?: string };
+          throw new Error(payload.message || "Failed to load leaderboard.");
         }
 
         const data = (await response.json()) as Team[];
