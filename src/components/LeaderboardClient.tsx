@@ -26,7 +26,9 @@ export function LeaderboardClient() {
         setTeams(data);
         setError("");
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load leaderboard.");
+        setError(
+          err instanceof Error ? err.message : "Failed to load leaderboard.",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -51,7 +53,7 @@ export function LeaderboardClient() {
         duration: 0.55,
         stagger: 0.08,
         ease: "power3.out",
-      }
+      },
     );
   }, [teams, isLoading]);
 
@@ -61,25 +63,35 @@ export function LeaderboardClient() {
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-8">
       <header className="grid gap-4 rounded-3xl border border-white/20 bg-gradient-to-br from-slate-950 to-indigo-900 p-6 text-white shadow-2xl sm:grid-cols-[1fr_auto]">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">University Leadboard</p>
-          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Team Rankings</h1>
-          <p className="mt-2 text-sm text-indigo-100">
+          {/* <p className="uppercase bg-indigo-200"> */}
+            <Image
+              src={`jiat-grayscale.png`}
+              alt={`jiat logo`}
+              width={240}
+              height={500}
+              objectFit="contain"
+              className="rounded-xl object-cover"
+              unoptimized
+            />
+          {/* </p> */}
+          <h1 className="mt-2 text-3xl font-bold sm:text-4xl ps-2">EMP Team Leaderboard</h1>
+          {/* <p className="mt-2 text-sm text-indigo-100">
             Track top-performing teams and register new challengers in seconds.
-          </p>
+          </p> */}
         </div>
-        <div className="flex flex-wrap gap-3 sm:justify-end">
+        <div className="flex items-center justify-center flex-wrap gap-3 sm:justify-end">
           <Link
             href="/register"
             className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:scale-[1.02]"
           >
             Register New Team
           </Link>
-          <Link
+          {/* <Link
             href="/admin"
             className="inline-flex items-center justify-center rounded-2xl border border-white/70 px-5 py-3 text-sm font-semibold text-white transition hover:scale-[1.02]"
           >
             Admin Login
-          </Link>
+          </Link> */}
         </div>
       </header>
 
@@ -90,7 +102,9 @@ export function LeaderboardClient() {
             data-card
             className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-lg backdrop-blur"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Top {index + 1}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+              Top {index + 1}
+            </p>
             <div className="mt-4 flex items-center gap-3">
               <Image
                 src={team.teamLogo}
@@ -101,21 +115,31 @@ export function LeaderboardClient() {
                 unoptimized
               />
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">{team.teamName}</h2>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  {team.teamName}
+                </h2>
                 <p className="text-xs text-slate-600">{team.teamSlogan}</p>
               </div>
             </div>
-            <p className="mt-6 text-3xl font-bold text-indigo-700">{team.teamMark} pts</p>
+            <p className="mt-6 text-3xl font-bold text-indigo-700">
+              {team.teamMark} pts
+            </p>
           </article>
         ))}
       </div>
 
       <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-md">
         <h3 className="text-lg font-semibold text-slate-900">All Teams</h3>
-        {isLoading && <p className="mt-3 text-sm text-slate-500">Loading leaderboard...</p>}
-        {!isLoading && error && <p className="mt-3 text-sm text-rose-600">{error}</p>}
+        {isLoading && (
+          <p className="mt-3 text-sm text-slate-500">Loading leaderboard...</p>
+        )}
+        {!isLoading && error && (
+          <p className="mt-3 text-sm text-rose-600">{error}</p>
+        )}
         {!isLoading && !error && teams.length === 0 && (
-          <p className="mt-3 text-sm text-slate-600">No teams yet. Register your first team.</p>
+          <p className="mt-3 text-sm text-slate-600">
+            No teams yet. Register your first team.
+          </p>
         )}
         {!isLoading && !error && teams.length > 0 && (
           <div className="mt-4 overflow-x-auto">
@@ -132,11 +156,19 @@ export function LeaderboardClient() {
               <tbody>
                 {teams.map((team, index) => (
                   <tr key={team._id} className="border-b border-slate-100">
-                    <td className="py-3 font-semibold text-slate-700">#{index + 1}</td>
+                    <td className="py-3 font-semibold text-slate-700">
+                      #{index + 1}
+                    </td>
                     <td className="py-3 text-slate-800">{team.teamName}</td>
-                    <td className="py-3 text-slate-700">{team.leader.fullName}</td>
-                    <td className="py-3 text-slate-700">{team.members.length}</td>
-                    <td className="py-3 font-semibold text-indigo-700">{team.teamMark}</td>
+                    <td className="py-3 text-slate-700">
+                      {team.leader.fullName}
+                    </td>
+                    <td className="py-3 text-slate-700">
+                      {team.members.length}
+                    </td>
+                    <td className="py-3 font-semibold text-indigo-700">
+                      {team.teamMark}
+                    </td>
                   </tr>
                 ))}
               </tbody>
