@@ -15,7 +15,7 @@ const teamSchema = new Schema(
     teamName: { type: String, required: true, trim: true, unique: true },
     teamLogo: { type: String, required: true },
     teamSlogan: { type: String, required: true, trim: true },
-    teamMark: { type: Number, default: 0, min: 0, max: 100 },
+    teamMark: { type: Number, default: 0 },
     leader: { type: personSchema, required: true },
     members: {
       type: [personSchema],

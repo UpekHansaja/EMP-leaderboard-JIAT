@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { TeamModel } from "@/models/Team";
 import { ADMIN_COOKIE_NAME, verifyAdminCookieValue } from "@/lib/admin-auth";
 
-export async function PATCH(
+export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ teamId: string }> }
 ) {
@@ -19,26 +19,16 @@ export async function PATCH(
       return NextResponse.json({ message: "Invalid team id." }, { status: 400 });
     }
 
-    const body = await request.json();
-    const markDelta = Number(body?.markDelta);
-    if (!Number.isFinite(markDelta)) {
-      return NextResponse.json({ message: "Mark adjustment must be a number." }, { status: 400 });
-    }
-
     await connectToDatabase();
 
-    const updated = await TeamModel.findByIdAndUpdate(
-      teamId,
-      { $inc: { teamMark: markDelta } },
-      { new: true }
-    );
-    if (!updated) {
+    const deletedTeam = await TeamModel.findByIdAndDelete(teamId);
+    if (!deletedTeam) {
       return NextResponse.json({ message: "Team not found." }, { status: 404 });
     }
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ message: "Team deleted successfully." });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to update team marks.";
+    const message = error instanceof Error ? error.message : "Failed to delete team.";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

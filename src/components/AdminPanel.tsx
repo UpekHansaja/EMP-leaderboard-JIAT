@@ -19,6 +19,10 @@ export function AdminPanel() {
     () => [...teams].sort((a, b) => b.teamMark - a.teamMark || a.teamName.localeCompare(b.teamName)),
     [teams]
   );
+  const totalTeamMarks = useMemo(
+    () => teams.reduce((total, team) => total + team.teamMark, 0),
+    [teams]
+  );
 
   const loadTeams = async () => {
     setLoadingTeams(true);
@@ -30,7 +34,7 @@ export function AdminPanel() {
       setTeams(data);
       setMarkDrafts(
         data.reduce<MarksState>((acc, team) => {
-          acc[team._id] = team.teamMark;
+          acc[team._id] = 0;
           return acc;
         }, {})
       );
@@ -84,12 +88,16 @@ export function AdminPanel() {
 
   const handleUpdateMark = async (teamId: string) => {
     setMessage("");
-    const teamMark = markDrafts[teamId];
+    const markDelta = Number(markDrafts[teamId]);
+    if (!Number.isFinite(markDelta)) {
+      setMessage("Mark adjustment must be a valid number.");
+      return;
+    }
 
     const response = await fetch(`/api/teams/${teamId}/marks`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ teamMark }),
+      body: JSON.stringify({ markDelta }),
     });
 
     const payload = (await response.json()) as { message?: string; teamMark?: number };
@@ -98,8 +106,34 @@ export function AdminPanel() {
       return;
     }
 
-    setTeams((prev) => prev.map((team) => (team._id === teamId ? { ...team, teamMark } : team)));
-    setMessage("Team mark updated.");
+    setTeams((prev) =>
+      prev.map((team) =>
+        team._id === teamId ? { ...team, teamMark: payload.teamMark ?? team.teamMark } : team
+      )
+    );
+    setMarkDrafts((prev) => ({ ...prev, [teamId]: 0 }));
+    setMessage("Team marks adjusted.");
+  };
+
+  const handleDeleteTeam = async (teamId: string, teamName: string) => {
+    const shouldDelete = window.confirm(`Delete team "${teamName}"? This action cannot be undone.`);
+    if (!shouldDelete) return;
+
+    setMessage("");
+    const response = await fetch(`/api/teams/${teamId}`, { method: "DELETE" });
+    const payload = (await response.json()) as { message?: string };
+    if (!response.ok) {
+      setMessage(payload.message || "Failed to delete team.");
+      return;
+    }
+
+    setTeams((prev) => prev.filter((team) => team._id !== teamId));
+    setMarkDrafts((prev) => {
+      const next = { ...prev };
+      delete next[teamId];
+      return next;
+    });
+    setMessage(payload.message || "Team deleted.");
   };
 
   if (!isAuthenticated) {
@@ -152,6 +186,9 @@ export function AdminPanel() {
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-indigo-600">Admin Console</p>
           <h1 className="text-3xl font-bold text-slate-900">Update Team Marks</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Total team marks: <span className="font-semibold text-slate-900">{totalTeamMarks}</span>
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/" className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700">
@@ -178,8 +215,9 @@ export function AdminPanel() {
                   <th className="py-3">Team</th>
                   <th className="py-3">Leader</th>
                   <th className="py-3">Current Mark</th>
-                  <th className="py-3">New Mark (0-100)</th>
-                  <th className="py-3">Action</th>
+                  <th className="py-3">Adjust Mark (+ / -)</th>
+                  <th className="py-3">New Total</th>
+                  <th className="py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -191,8 +229,6 @@ export function AdminPanel() {
                     <td className="py-3">
                       <input
                         type="number"
-                        min={0}
-                        max={100}
                         value={markDrafts[team._id] ?? 0}
                         onChange={(e) =>
                           setMarkDrafts((prev) => ({
@@ -200,16 +236,30 @@ export function AdminPanel() {
                             [team._id]: Number(e.target.value),
                           }))
                         }
-                        className="w-28 rounded-xl border border-slate-300 p-2"
+                        className="w-32 rounded-xl border border-slate-300 p-2"
+                        placeholder="e.g. -50 or 300"
                       />
                     </td>
                     <td className="py-3">
+                      <span className="font-semibold text-slate-800">
+                        {team.teamMark + (markDrafts[team._id] ?? 0)}
+                      </span>
+                    </td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleUpdateMark(team._id)}
                         className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white"
                       >
-                        Save Mark
+                        Apply
                       </button>
+                        <button
+                          onClick={() => handleDeleteTeam(team._id, team.teamName)}
+                          className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
