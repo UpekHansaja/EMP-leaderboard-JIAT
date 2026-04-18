@@ -21,8 +21,8 @@ const teamSchema = new Schema(
       type: [personSchema],
       required: true,
       validate: {
-        validator: (members: unknown[]) => members.length === 8,
-        message: "Each team must have exactly 8 members.",
+        validator: (members: unknown[]) => members.length === 7,
+        message: "Each team must have exactly 7 members.",
       },
     },
   },

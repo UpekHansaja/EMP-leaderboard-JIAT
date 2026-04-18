@@ -49,7 +49,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ### API
 
 - `GET /api/teams`: get all teams sorted by marks
-- `POST /api/teams`: register a new team (leader + 8 members)
+- `POST /api/teams`: register a new team (leader + 7 members)
 - `POST /api/admin/login`: admin login
 - `POST /api/admin/logout`: admin logout
 - `GET /api/admin/session`: admin session check

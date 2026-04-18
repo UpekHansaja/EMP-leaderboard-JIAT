@@ -2,9 +2,11 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import type { Team } from "@/types/team";
+import type { PersonInfo, Team } from "@/types/team";
 
 type MarksState = Record<string, number>;
+type EditableTeam = Pick<Team, "_id" | "teamName" | "teamLogo" | "teamSlogan" | "leader" | "members">;
+const EMPTY_PERSON: PersonInfo = { fullName: "", nic: "", contactNo: "", email: "" };
 
 export function AdminPanel() {
   const [username, setUsername] = useState("");
@@ -14,6 +16,8 @@ export function AdminPanel() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [markDrafts, setMarkDrafts] = useState<MarksState>({});
   const [loadingTeams, setLoadingTeams] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<EditableTeam | null>(null);
+  const [isSavingTeam, setIsSavingTeam] = useState(false);
 
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => b.teamMark - a.teamMark || a.teamName.localeCompare(b.teamName)),
@@ -136,6 +140,88 @@ export function AdminPanel() {
     setMessage(payload.message || "Team deleted.");
   };
 
+  const openTeamModal = (team: Team) => {
+    setSelectedTeam({
+      _id: team._id,
+      teamName: team.teamName,
+      teamLogo: team.teamLogo,
+      teamSlogan: team.teamSlogan,
+      leader: { ...team.leader },
+      members: team.members.map((member) => ({ ...member })),
+    });
+    setMessage("");
+  };
+
+  const updateSelectedPerson = (
+    target: "leader" | "member",
+    key: keyof PersonInfo,
+    value: string,
+    memberIndex?: number
+  ) => {
+    if (!selectedTeam) return;
+
+    if (target === "leader") {
+      setSelectedTeam({ ...selectedTeam, leader: { ...selectedTeam.leader, [key]: value } });
+      return;
+    }
+
+    if (memberIndex === undefined) return;
+    const nextMembers = selectedTeam.members.map((member, index) =>
+      index === memberIndex ? { ...member, [key]: value } : member
+    );
+    setSelectedTeam({ ...selectedTeam, members: nextMembers });
+  };
+
+  const addMemberToSelectedTeam = () => {
+    if (!selectedTeam) return;
+    if (selectedTeam.members.length >= 7) {
+      setMessage("A team can only have 7 members (plus leader).");
+      return;
+    }
+    setSelectedTeam({ ...selectedTeam, members: [...selectedTeam.members, { ...EMPTY_PERSON }] });
+  };
+
+  const removeMemberFromSelectedTeam = (memberIndex: number) => {
+    if (!selectedTeam) return;
+    const nextMembers = selectedTeam.members.filter((_, index) => index !== memberIndex);
+    setSelectedTeam({ ...selectedTeam, members: nextMembers });
+  };
+
+  const saveSelectedTeam = async () => {
+    if (!selectedTeam) return;
+    setMessage("");
+
+    if (selectedTeam.members.length !== 7) {
+      setMessage("Please keep exactly 7 members per team.");
+      return;
+    }
+
+    const allPeople = [selectedTeam.leader, ...selectedTeam.members];
+    const hasEmptyField = allPeople.some((person) => Object.values(person).some((value) => !value.trim()));
+    if (hasEmptyField || !selectedTeam.teamName.trim() || !selectedTeam.teamLogo.trim() || !selectedTeam.teamSlogan.trim()) {
+      setMessage("Please complete all team, leader and member fields before saving.");
+      return;
+    }
+
+    setIsSavingTeam(true);
+    const response = await fetch(`/api/teams/${selectedTeam._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(selectedTeam),
+    });
+    const payload = (await response.json()) as Team & { message?: string };
+    setIsSavingTeam(false);
+
+    if (!response.ok) {
+      setMessage(payload.message || "Failed to save team details.");
+      return;
+    }
+
+    setTeams((prev) => prev.map((team) => (team._id === selectedTeam._id ? { ...team, ...payload } : team)));
+    setSelectedTeam(null);
+    setMessage("Team details updated successfully.");
+  };
+
   if (!isAuthenticated) {
     return (
       <section className="mx-auto w-full max-w-md px-4 py-10">
@@ -223,7 +309,14 @@ export function AdminPanel() {
               <tbody>
                 {sortedTeams.map((team) => (
                   <tr key={team._id} className="border-b border-slate-100">
-                    <td className="py-3 font-medium text-slate-900">{team.teamName}</td>
+                    <td className="py-3 font-medium text-slate-900">
+                      <button
+                        onClick={() => openTeamModal(team)}
+                        className="rounded-lg px-2 py-1 text-left text-indigo-700 hover:bg-indigo-50"
+                      >
+                        {team.teamName}
+                      </button>
+                    </td>
                     <td className="py-3 text-slate-700">{team.leader.fullName}</td>
                     <td className="py-3 text-indigo-700">{team.teamMark}</td>
                     <td className="py-3">
@@ -247,12 +340,18 @@ export function AdminPanel() {
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleUpdateMark(team._id)}
-                        className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white"
-                      >
-                        Apply
-                      </button>
+                        <button
+                          onClick={() => handleUpdateMark(team._id)}
+                          className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white"
+                        >
+                          Apply
+                        </button>
+                        <button
+                          onClick={() => openTeamModal(team)}
+                          className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white"
+                        >
+                          Manage
+                        </button>
                         <button
                           onClick={() => handleDeleteTeam(team._id, team.teamName)}
                           className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white"
@@ -268,6 +367,121 @@ export function AdminPanel() {
           </div>
         )}
       </div>
+
+      {selectedTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-900">Manage Team: {selectedTeam.teamName}</h2>
+              <button
+                onClick={() => setSelectedTeam(null)}
+                className="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="grid gap-1 text-sm">
+                Team Name
+                <input
+                  className="rounded-xl border border-slate-300 p-2"
+                  value={selectedTeam.teamName}
+                  onChange={(e) => setSelectedTeam({ ...selectedTeam, teamName: e.target.value })}
+                />
+              </label>
+              <label className="grid gap-1 text-sm md:col-span-2">
+                Team Logo URL / Data URL
+                <input
+                  className="rounded-xl border border-slate-300 p-2"
+                  value={selectedTeam.teamLogo}
+                  onChange={(e) => setSelectedTeam({ ...selectedTeam, teamLogo: e.target.value })}
+                />
+              </label>
+              <label className="grid gap-1 text-sm md:col-span-3">
+                Team Slogan
+                <input
+                  className="rounded-xl border border-slate-300 p-2"
+                  value={selectedTeam.teamSlogan}
+                  onChange={(e) => setSelectedTeam({ ...selectedTeam, teamSlogan: e.target.value })}
+                />
+              </label>
+            </div>
+
+            <h3 className="mt-6 text-lg font-semibold text-slate-900">Leader Details</h3>
+            <div className="mt-2 grid gap-3 md:grid-cols-2">
+              {(["fullName", "nic", "contactNo", "email"] as const).map((fieldKey) => (
+                <label key={fieldKey} className="grid gap-1 text-sm capitalize">
+                  {fieldKey}
+                  <input
+                    className="rounded-xl border border-slate-300 p-2"
+                    value={selectedTeam.leader[fieldKey]}
+                    onChange={(e) => updateSelectedPerson("leader", fieldKey, e.target.value)}
+                  />
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-6 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Members ({selectedTeam.members.length}/7)
+              </h3>
+              <button
+                onClick={addMemberToSelectedTeam}
+                className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white"
+              >
+                Add Member
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-4">
+              {selectedTeam.members.map((member, memberIndex) => (
+                <div key={`member-${memberIndex}`} className="rounded-2xl border border-slate-200 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-800">Member {memberIndex + 1}</p>
+                    <button
+                      onClick={() => removeMemberFromSelectedTeam(memberIndex)}
+                      className="rounded-lg bg-rose-600 px-2 py-1 text-xs font-semibold text-white"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {(["fullName", "nic", "contactNo", "email"] as const).map((fieldKey) => (
+                      <label key={`${memberIndex}-${fieldKey}`} className="grid gap-1 text-sm capitalize">
+                        {fieldKey}
+                        <input
+                          className="rounded-xl border border-slate-300 p-2"
+                          value={member[fieldKey]}
+                          onChange={(e) =>
+                            updateSelectedPerson("member", fieldKey, e.target.value, memberIndex)
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setSelectedTeam(null)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveSelectedTeam}
+                disabled={isSavingTeam}
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {isSavingTeam ? "Saving..." : "Save Team"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

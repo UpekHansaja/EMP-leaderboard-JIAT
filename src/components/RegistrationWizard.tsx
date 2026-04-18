@@ -14,7 +14,7 @@ const EMPTY_PERSON: PersonInfo = {
   email: "",
 };
 
-const initialMembers = Array.from({ length: 8 }, () => ({ ...EMPTY_PERSON }));
+const initialMembers = Array.from({ length: 7 }, () => ({ ...EMPTY_PERSON }));
 
 type WizardForm = TeamRegistrationInput;
 
@@ -33,7 +33,7 @@ export function RegistrationWizard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState<WizardForm>(initialState);
   const cardRef = useRef<HTMLDivElement | null>(null);
-  const totalSteps = 10;
+  const totalSteps = 9;
 
   useEffect(() => {
     if (!cardRef.current) {
