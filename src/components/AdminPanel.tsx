@@ -152,6 +152,18 @@ export function AdminPanel() {
     setMessage("");
   };
 
+  const openCreateTeamModal = () => {
+    setSelectedTeam({
+      _id: "new",
+      teamName: "",
+      teamLogo: "",
+      teamSlogan: "",
+      leader: { ...EMPTY_PERSON },
+      members: Array.from({ length: 7 }, () => ({ ...EMPTY_PERSON })),
+    });
+    setMessage("");
+  };
+
   const updateSelectedPerson = (
     target: "leader" | "member",
     key: keyof PersonInfo,
@@ -191,8 +203,8 @@ export function AdminPanel() {
     if (!selectedTeam) return;
     setMessage("");
 
-    if (selectedTeam.members.length !== 7) {
-      setMessage("Please keep exactly 7 members per team.");
+    if (selectedTeam.members.length > 7) {
+      setMessage("A team can have at most 7 members (plus leader).");
       return;
     }
 
@@ -204,12 +216,26 @@ export function AdminPanel() {
     }
 
     setIsSavingTeam(true);
-    const response = await fetch(`/api/teams/${selectedTeam._id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(selectedTeam),
-    });
-    const payload = (await response.json()) as Team & { message?: string };
+    let response;
+    let payload;
+
+    if (selectedTeam._id === "new") {
+      const { _id, ...teamData } = selectedTeam;
+      response = await fetch("/api/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(teamData),
+      });
+      payload = await response.json();
+    } else {
+      response = await fetch(`/api/teams/${selectedTeam._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(selectedTeam),
+      });
+      payload = await response.json();
+    }
+    
     setIsSavingTeam(false);
 
     if (!response.ok) {
@@ -217,9 +243,15 @@ export function AdminPanel() {
       return;
     }
 
-    setTeams((prev) => prev.map((team) => (team._id === selectedTeam._id ? { ...team, ...payload } : team)));
+    if (selectedTeam._id === "new") {
+      setTeams((prev) => [...prev, payload]);
+      setMarkDrafts((prev) => ({ ...prev, [payload._id]: 0 }));
+    } else {
+      setTeams((prev) => prev.map((team) => (team._id === selectedTeam._id ? { ...team, ...payload } : team)));
+    }
+    
     setSelectedTeam(null);
-    setMessage("Team details updated successfully.");
+    setMessage(selectedTeam._id === "new" ? "Team created successfully." : "Team details updated successfully.");
   };
 
   if (!isAuthenticated) {
@@ -277,10 +309,13 @@ export function AdminPanel() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/" className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700">
+          <button onClick={openCreateTeamModal} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+            Create Team
+          </button>
+          <Link href="/" className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
             View Leadboard
           </Link>
-          <button onClick={handleLogout} className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white">
+          <button onClick={handleLogout} className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800">
             Logout
           </button>
         </div>
@@ -369,116 +404,165 @@ export function AdminPanel() {
       </div>
 
       {selectedTeam && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-900">Manage Team: {selectedTeam.teamName}</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm transition-opacity">
+          <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white/95 shadow-2xl ring-1 ring-slate-900/5 backdrop-blur-md">
+            <header className="flex flex-shrink-0 items-center justify-between border-b border-slate-200/60 bg-slate-50/50 px-6 py-4 backdrop-blur-md">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+                  {selectedTeam._id === "new" ? "Create New Team" : "Manage Team"}
+                </h2>
+                <p className="text-sm font-medium text-indigo-600">
+                  {selectedTeam._id === "new" ? "Fill out the details below" : selectedTeam.teamName}
+                </p>
+              </div>
               <button
                 onClick={() => setSelectedTeam(null)}
-                className="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-700"
+                className="rounded-full bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
               >
-                Close
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
-            </div>
+            </header>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              <label className="grid gap-1 text-sm">
-                Team Name
-                <input
-                  className="rounded-xl border border-slate-300 p-2"
-                  value={selectedTeam.teamName}
-                  onChange={(e) => setSelectedTeam({ ...selectedTeam, teamName: e.target.value })}
-                />
-              </label>
-              <label className="grid gap-1 text-sm md:col-span-2">
-                Team Logo URL / Data URL
-                <input
-                  className="rounded-xl border border-slate-300 p-2"
-                  value={selectedTeam.teamLogo}
-                  onChange={(e) => setSelectedTeam({ ...selectedTeam, teamLogo: e.target.value })}
-                />
-              </label>
-              <label className="grid gap-1 text-sm md:col-span-3">
-                Team Slogan
-                <input
-                  className="rounded-xl border border-slate-300 p-2"
-                  value={selectedTeam.teamSlogan}
-                  onChange={(e) => setSelectedTeam({ ...selectedTeam, teamSlogan: e.target.value })}
-                />
-              </label>
-            </div>
-
-            <h3 className="mt-6 text-lg font-semibold text-slate-900">Leader Details</h3>
-            <div className="mt-2 grid gap-3 md:grid-cols-2">
-              {(["fullName", "nic", "contactNo", "email"] as const).map((fieldKey) => (
-                <label key={fieldKey} className="grid gap-1 text-sm capitalize">
-                  {fieldKey}
-                  <input
-                    className="rounded-xl border border-slate-300 p-2"
-                    value={selectedTeam.leader[fieldKey]}
-                    onChange={(e) => updateSelectedPerson("leader", fieldKey, e.target.value)}
-                  />
-                </label>
-              ))}
-            </div>
-
-            <div className="mt-6 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Members ({selectedTeam.members.length}/7)
-              </h3>
-              <button
-                onClick={addMemberToSelectedTeam}
-                className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white"
-              >
-                Add Member
-              </button>
-            </div>
-
-            <div className="mt-3 space-y-4">
-              {selectedTeam.members.map((member, memberIndex) => (
-                <div key={`member-${memberIndex}`} className="rounded-2xl border border-slate-200 p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-slate-800">Member {memberIndex + 1}</p>
-                    <button
-                      onClick={() => removeMemberFromSelectedTeam(memberIndex)}
-                      className="rounded-lg bg-rose-600 px-2 py-1 text-xs font-semibold text-white"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {(["fullName", "nic", "contactNo", "email"] as const).map((fieldKey) => (
-                      <label key={`${memberIndex}-${fieldKey}`} className="grid gap-1 text-sm capitalize">
-                        {fieldKey}
-                        <input
-                          className="rounded-xl border border-slate-300 p-2"
-                          value={member[fieldKey]}
-                          onChange={(e) =>
-                            updateSelectedPerson("member", fieldKey, e.target.value, memberIndex)
-                          }
-                        />
-                      </label>
-                    ))}
-                  </div>
+            <div className="flex-1 overflow-y-auto px-6 py-6 scroll-smooth">
+              <section className="mb-8">
+                <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">Team Details</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="group flex flex-col gap-1 text-sm font-medium text-slate-700">
+                    Team Name
+                    <input
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                      value={selectedTeam.teamName}
+                      onChange={(e) => setSelectedTeam({ ...selectedTeam, teamName: e.target.value })}
+                    />
+                  </label>
+                  <label className="group flex flex-col gap-1 text-sm font-medium text-slate-700">
+                    Team Slogan
+                    <input
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                      value={selectedTeam.teamSlogan}
+                      onChange={(e) => setSelectedTeam({ ...selectedTeam, teamSlogan: e.target.value })}
+                    />
+                  </label>
+                  <label className="group flex flex-col gap-1 text-sm font-medium text-slate-700 md:col-span-2">
+                    Team Logo URL (Or Base64)
+                    <input
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                      value={selectedTeam.teamLogo}
+                      onChange={(e) => setSelectedTeam({ ...selectedTeam, teamLogo: e.target.value })}
+                    />
+                  </label>
                 </div>
-              ))}
+              </section>
+
+              <section className="mb-8 rounded-2xl border border-indigo-100 bg-indigo-50/30 p-5">
+                <h3 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-800">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs text-white">L</span>
+                  Leader Details
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {(["fullName", "nic", "contactNo", "email"] as const).map((fieldKey) => (
+                    <label key={`leader-${fieldKey}`} className="flex flex-col gap-1 text-sm font-medium capitalize text-slate-700">
+                      {fieldKey.replace(/([A-Z])/g, ' $1').trim()}
+                      <input
+                        className="rounded-xl border border-white/60 bg-white/70 px-4 py-2.5 shadow-sm outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200"
+                        value={selectedTeam.leader[fieldKey]}
+                        onChange={(e) => updateSelectedPerson("leader", fieldKey, e.target.value)}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                    Team Members <span className="ml-2 inline-flex items-center justify-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{selectedTeam.members.length}/7</span>
+                  </h3>
+                  <button
+                    onClick={addMemberToSelectedTeam}
+                    disabled={selectedTeam.members.length >= 7}
+                    className="flex items-center gap-1 rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:opacity-50"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Member
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {selectedTeam.members.length === 0 && (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-8 text-center">
+                      <p className="text-sm text-slate-500">No other team members yet.</p>
+                      <p className="text-xs text-slate-400">Click &apos;Add Member&apos; to include more teammates.</p>
+                    </div>
+                  )}
+                  {selectedTeam.members.map((member, memberIndex) => (
+                    <div key={`member-${memberIndex}`} className="group relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow-md">
+                      <div className="mb-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-700">
+                            {memberIndex + 1}
+                          </span>
+                          <p className="text-sm font-semibold text-slate-800">Member Info</p>
+                        </div>
+                        <button
+                          onClick={() => removeMemberFromSelectedTeam(memberIndex)}
+                          className="flex items-center gap-1 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-100"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Remove
+                        </button>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {(["fullName", "nic", "contactNo", "email"] as const).map((fieldKey) => (
+                          <label key={`${memberIndex}-${fieldKey}`} className="flex flex-col gap-1 text-sm font-medium capitalize text-slate-700">
+                            {fieldKey.replace(/([A-Z])/g, ' $1').trim()}
+                            <input
+                              className="rounded-xl border border-slate-200 px-4 py-2.5 outline-none transition-all hover:border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                              value={member[fieldKey]}
+                              onChange={(e) =>
+                                updateSelectedPerson("member", fieldKey, e.target.value, memberIndex)
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
 
-            <div className="mt-5 flex items-center justify-end gap-3">
+            <footer className="flex flex-shrink-0 items-center justify-end gap-3 border-t border-slate-200/60 bg-slate-50/80 px-6 py-4 backdrop-blur-md">
               <button
                 onClick={() => setSelectedTeam(null)}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200"
               >
                 Cancel
               </button>
               <button
                 onClick={saveSelectedTeam}
                 disabled={isSavingTeam}
-                className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
               >
-                {isSavingTeam ? "Saving..." : "Save Team"}
+                {isSavingTeam ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>Save Team</>
+                )}
               </button>
-            </div>
+            </footer>
           </div>
         </div>
       )}

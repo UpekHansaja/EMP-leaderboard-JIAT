@@ -164,7 +164,7 @@ export function LeaderboardClient() {
                       {team.leader.fullName}
                     </td>
                     <td className="py-3 text-slate-700">
-                      {team.members.length}
+                      {team.members.length + 1}
                     </td>
                     <td className="py-3 font-semibold text-indigo-700">
                       {team.teamMark}

@@ -21,8 +21,8 @@ const teamSchema = new Schema(
       type: [personSchema],
       required: true,
       validate: {
-        validator: (members: unknown[]) => members.length === 7,
-        message: "Each team must have exactly 7 members.",
+        validator: (members: unknown[]) => members.length <= 7,
+        message: "Each team must have at most 7 members.",
       },
     },
   },
@@ -31,4 +31,5 @@ const teamSchema = new Schema(
   }
 );
 
+delete models.Team;
 export const TeamModel = models.Team || model("Team", teamSchema);

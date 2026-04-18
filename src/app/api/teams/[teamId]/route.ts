@@ -41,10 +41,10 @@ export async function PUT(
       typeof body.teamSlogan !== "string" ||
       !isValidPerson(body.leader) ||
       !Array.isArray(body.members) ||
-      body.members.length !== 7 ||
+      body.members.length > 7 ||
       !body.members.every(isValidPerson)
     ) {
-      return NextResponse.json({ message: "Invalid team payload. Team must contain leader + 7 members." }, { status: 400 });
+      return NextResponse.json({ message: "Invalid team payload. Team must contain leader + up to 7 members." }, { status: 400 });
     }
 
     await connectToDatabase();
@@ -72,8 +72,9 @@ export async function PUT(
       "code" in error &&
       (error as Error & { code?: number }).code === 11000;
 
+    const errorMessage = error instanceof Error ? error.message : "Failed to update team.";
     return NextResponse.json(
-      { message: isDuplicateName ? "A team with this name already exists." : "Failed to update team." },
+      { message: isDuplicateName ? "A team with this name already exists." : errorMessage },
       { status: isDuplicateName ? 409 : 500 }
     );
   }
