@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import gsap from "gsap";
 import type { Team } from "@/types/team";
+import { Crown } from "lucide-react";
 
 export function LeaderboardClient() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -100,12 +101,25 @@ export function LeaderboardClient() {
           <article
             key={team._id}
             data-card
-            className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-lg backdrop-blur"
+            className="group relative rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-lg backdrop-blur"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            {/* Crown Icon */}
+            <div className="absolute -right-2 -top-2 rotate-[25deg] opacity-90 transition-transform duration-500 group-hover:rotate-[35deg] group-hover:scale-110">
+              <Crown 
+                fill="currentColor"
+                strokeWidth={1}
+                className={`h-16 w-16 ${
+                  index === 0 ? "text-yellow-400 drop-shadow-[0_4px_6px_rgba(250,204,21,0.4)]" : 
+                  index === 1 ? "text-slate-300 drop-shadow-[0_4px_6px_rgba(203,213,225,0.8)]" : 
+                                "text-amber-600 drop-shadow-[0_4px_6px_rgba(217,119,6,0.4)]"
+                }`}
+              />
+            </div>
+
+            <p className="relative z-10 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
               Top {index + 1}
             </p>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="relative z-10 mt-4 flex items-center gap-3">
               <Image
                 src={team.teamLogo}
                 alt={`${team.teamName} logo`}
@@ -121,7 +135,7 @@ export function LeaderboardClient() {
                 <p className="text-xs text-slate-600">{team.teamSlogan}</p>
               </div>
             </div>
-            <p className="mt-6 text-3xl font-bold text-indigo-700">
+            <p className="relative z-10 mt-6 text-3xl font-bold text-indigo-700">
               {team.teamMark} pts
             </p>
           </article>
