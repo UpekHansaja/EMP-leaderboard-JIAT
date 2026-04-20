@@ -18,11 +18,27 @@ export function AdminPanel() {
   const [loadingTeams, setLoadingTeams] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<EditableTeam | null>(null);
   const [isSavingTeam, setIsSavingTeam] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => b.teamMark - a.teamMark || a.teamName.localeCompare(b.teamName)),
     [teams]
   );
+
+  const filteredTeams = useMemo(() => {
+    if (!searchQuery.trim()) return sortedTeams;
+    const query = searchQuery.toLowerCase();
+    return sortedTeams.filter((team) => {
+      if (team.teamName.toLowerCase().includes(query)) return true;
+      if (team.leader.fullName.toLowerCase().includes(query)) return true;
+      if (team.leader.nic.toLowerCase().includes(query)) return true;
+      return team.members.some(
+        (member) =>
+          member.fullName.toLowerCase().includes(query) ||
+          member.nic.toLowerCase().includes(query)
+      );
+    });
+  }, [sortedTeams, searchQuery]);
   const totalTeamMarks = useMemo(
     () => teams.reduce((total, team) => total + team.teamMark, 0),
     [teams]
@@ -323,11 +339,29 @@ export function AdminPanel() {
 
       {message && <p className="mb-4 text-sm text-slate-700">{message}</p>}
 
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <label className="relative flex-1 max-w-md">
+          <svg className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <circle cx="11" cy="11" r="8" />
+            <path strokeLinecap="round" d="M21 21l-4.3-4.3" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search teams or students by name/NIC..."
+            className="w-full rounded-xl border border-slate-300 py-2.5 pl-10 pr-4 text-sm shadow-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </label>
+      </div>
+
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-md">
         {loadingTeams ? (
           <p className="text-sm text-slate-600">Loading teams...</p>
         ) : sortedTeams.length === 0 ? (
           <p className="text-sm text-slate-600">No teams available yet.</p>
+        ) : filteredTeams.length === 0 ? (
+          <p className="text-sm text-slate-600">No teams or students match your search.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left text-sm">
@@ -342,7 +376,7 @@ export function AdminPanel() {
                 </tr>
               </thead>
               <tbody>
-                {sortedTeams.map((team) => (
+                {filteredTeams.map((team) => (
                   <tr key={team._id} className="border-b border-slate-100">
                     <td className="py-3 font-medium text-slate-900">
                       <button
