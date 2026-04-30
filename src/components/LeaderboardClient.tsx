@@ -174,12 +174,12 @@ export function LeaderboardClient() {
                       #{index + 1}
                     </td>
                     <td className="py-3 text-slate-800">
-                      <div className="group relative inline-block">
+                      <div className="group relative inline-block" tabIndex={0}>
                         <span className="cursor-help font-medium border-b border-dashed border-slate-300">
                           {team.teamName}
                         </span>
                         
-                        <div className="absolute bottom-full left-0 z-[60] mb-2 w-72 opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto">
+                        <div className="absolute bottom-full left-0 z-[60] mb-2 w-72 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus:pointer-events-auto">
                           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl flex flex-col gap-3">
                             <div className="flex items-center gap-3">
                               <Image
