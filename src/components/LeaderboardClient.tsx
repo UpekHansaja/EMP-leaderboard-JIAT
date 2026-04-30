@@ -179,7 +179,7 @@ export function LeaderboardClient() {
                           {team.teamName}
                         </span>
                         
-                        <div className="z-[60] opacity-0 transition-all duration-200 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus:opacity-100 group-focus:pointer-events-auto max-lg:fixed max-lg:top-1/2 max-lg:left-1/2 max-lg:-translate-x-1/2 max-lg:-translate-y-1/2 max-lg:w-[85vw] max-lg:max-w-sm max-lg:shadow-[0_0_0_100vmax_rgba(15,23,42,0.4)] lg:absolute lg:bottom-full lg:left-0 lg:mb-2 lg:w-72">
+                        <div className="z-[60] rounded-2xl opacity-0 transition-all duration-200 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus:opacity-100 group-focus:pointer-events-auto max-lg:fixed max-lg:top-1/2 max-lg:left-1/2 max-lg:-translate-x-1/2 max-lg:-translate-y-1/2 max-lg:w-[85vw] max-lg:max-w-sm max-lg:shadow-[0_0_0_100vmax_rgba(15,23,42,0.4)] lg:absolute lg:bottom-full lg:left-0 lg:mb-2 lg:w-72">
                           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl flex flex-col gap-3">
                             <div className="flex items-center gap-3">
                               <Image

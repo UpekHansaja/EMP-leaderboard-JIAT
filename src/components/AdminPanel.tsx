@@ -411,7 +411,7 @@ export function AdminPanel() {
                       <div className="group relative inline-block" tabIndex={0}>
                         <span className="cursor-help border-b border-dashed border-indigo-300 font-semibold text-lg">{team.teamMark}</span>
                         
-                        <div className="z-[60] opacity-0 transition-all duration-200 pointer-events-none group-hover:opacity-100 group-focus:opacity-100 group-hover:pointer-events-auto group-focus:pointer-events-auto max-lg:fixed max-lg:top-1/2 max-lg:left-1/2 max-lg:-translate-x-1/2 max-lg:-translate-y-1/2 max-lg:w-[85vw] max-lg:max-w-xs max-lg:shadow-[0_0_0_100vmax_rgba(15,23,42,0.4)] lg:absolute lg:bottom-full lg:left-1/2 lg:mb-2 lg:w-56 lg:-translate-x-1/2">
+                        <div className="z-[60] rounded-2xl opacity-0 transition-all duration-200 pointer-events-none group-hover:opacity-100 group-focus:opacity-100 group-hover:pointer-events-auto group-focus:pointer-events-auto max-lg:fixed max-lg:top-1/2 max-lg:left-1/2 max-lg:-translate-x-1/2 max-lg:-translate-y-1/2 max-lg:w-[85vw] max-lg:max-w-xs max-lg:shadow-[0_0_0_100vmax_rgba(15,23,42,0.4)] lg:absolute lg:bottom-full lg:left-1/2 lg:mb-2 lg:w-56 lg:-translate-x-1/2">
                           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
                             <h4 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Recent Updates</h4>
                             {(!team.markLogs || team.markLogs.length === 0) ? (
