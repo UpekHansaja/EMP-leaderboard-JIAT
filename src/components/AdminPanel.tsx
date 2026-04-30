@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import type { PersonInfo, Team } from "@/types/team";
 
@@ -20,6 +20,34 @@ export function AdminPanel() {
   const [isSavingTeam, setIsSavingTeam] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [logModalTeam, setLogModalTeam] = useState<Team | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (selectedTeam) {
+        setSelectedTeam({ ...selectedTeam, teamLogo: base64 });
+      }
+    };
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDownloadLogo = () => {
+    if (!selectedTeam?.teamLogo) return;
+    
+    const link = document.createElement("a");
+    link.href = selectedTeam.teamLogo;
+    link.download = `${selectedTeam.teamName || "team"}-logo`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => b.teamMark - a.teamMark || a.teamName.localeCompare(b.teamName)),
@@ -176,7 +204,7 @@ export function AdminPanel() {
       teamLogo: "",
       teamSlogan: "",
       leader: { ...EMPTY_PERSON },
-      members: Array.from({ length: 7 }, () => ({ ...EMPTY_PERSON })),
+      members: [],
     });
     setMessage("");
   };
@@ -203,10 +231,6 @@ export function AdminPanel() {
 
   const addMemberToSelectedTeam = () => {
     if (!selectedTeam) return;
-    if (selectedTeam.members.length >= 7) {
-      setMessage("A team can only have 7 members (plus leader).");
-      return;
-    }
     setSelectedTeam({ ...selectedTeam, members: [...selectedTeam.members, { ...EMPTY_PERSON }] });
   };
 
@@ -219,11 +243,6 @@ export function AdminPanel() {
   const saveSelectedTeam = async () => {
     if (!selectedTeam) return;
     setMessage("");
-
-    if (selectedTeam.members.length > 7) {
-      setMessage("A team can have at most 7 members (plus leader).");
-      return;
-    }
 
     const allPeople = [selectedTeam.leader, ...selectedTeam.members];
     const hasEmptyField = allPeople.some((person) => Object.values(person).some((value) => !value.trim()));
@@ -364,7 +383,7 @@ export function AdminPanel() {
         ) : filteredTeams.length === 0 ? (
           <p className="text-sm text-slate-600">No teams or students match your search.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto lg:overflow-visible">
             <table className="w-full min-w-[700px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
@@ -514,14 +533,37 @@ export function AdminPanel() {
                       onChange={(e) => setSelectedTeam({ ...selectedTeam, teamSlogan: e.target.value })}
                     />
                   </label>
-                  <label className="group flex flex-col gap-1 text-sm font-medium text-slate-700 md:col-span-2">
-                    Team Logo URL (Or Base64)
-                    <input
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                      value={selectedTeam.teamLogo}
-                      onChange={(e) => setSelectedTeam({ ...selectedTeam, teamLogo: e.target.value })}
-                    />
-                  </label>
+                  <div className="group flex flex-col gap-1 text-sm font-medium text-slate-700 md:col-span-2">
+                    <label>Team Logo URL (Or Base64)</label>
+                    <div className="flex gap-2">
+                      <input
+                        className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                        value={selectedTeam.teamLogo}
+                        onChange={(e) => setSelectedTeam({ ...selectedTeam, teamLogo: e.target.value })}
+                      />
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={fileInputRef} 
+                        onChange={handleImageUpload} 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="whitespace-nowrap rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                      >
+                        Update Image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadLogo}
+                        className="whitespace-nowrap rounded-xl bg-indigo-50 px-4 py-2.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </section>
 
@@ -547,12 +589,11 @@ export function AdminPanel() {
               <section>
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                    Team Members <span className="ml-2 inline-flex items-center justify-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{selectedTeam.members.length}/7</span>
+                    Team Members <span className="ml-2 inline-flex items-center justify-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{selectedTeam.members.length}</span>
                   </h3>
                   <button
                     onClick={addMemberToSelectedTeam}
-                    disabled={selectedTeam.members.length >= 7}
-                    className="flex items-center gap-1 rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:opacity-50"
+                    className="flex items-center gap-1 rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

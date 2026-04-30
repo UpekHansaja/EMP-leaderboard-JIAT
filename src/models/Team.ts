@@ -20,10 +20,6 @@ const teamSchema = new Schema(
     members: {
       type: [personSchema],
       required: true,
-      validate: {
-        validator: (members: unknown[]) => members.length <= 7,
-        message: "Each team must have at most 7 members.",
-      },
     },
     markLogs: {
       type: [

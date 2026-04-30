@@ -41,10 +41,9 @@ export async function PUT(
       typeof body.teamSlogan !== "string" ||
       !isValidPerson(body.leader) ||
       !Array.isArray(body.members) ||
-      body.members.length > 7 ||
       !body.members.every(isValidPerson)
     ) {
-      return NextResponse.json({ message: "Invalid team payload. Team must contain leader + up to 7 members." }, { status: 400 });
+      return NextResponse.json({ message: "Invalid team payload. Team must contain a leader and members." }, { status: 400 });
     }
 
     await connectToDatabase();

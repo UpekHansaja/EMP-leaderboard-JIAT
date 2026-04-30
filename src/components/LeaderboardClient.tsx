@@ -156,7 +156,7 @@ export function LeaderboardClient() {
           </p>
         )}
         {!isLoading && !error && teams.length > 0 && (
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 overflow-x-auto lg:overflow-visible">
             <table className="w-full min-w-[680px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
@@ -173,7 +173,64 @@ export function LeaderboardClient() {
                     <td className="py-3 font-semibold text-slate-700">
                       #{index + 1}
                     </td>
-                    <td className="py-3 text-slate-800">{team.teamName}</td>
+                    <td className="py-3 text-slate-800">
+                      <div className="group relative inline-block">
+                        <span className="cursor-help font-medium border-b border-dashed border-slate-300">
+                          {team.teamName}
+                        </span>
+                        
+                        <div className="absolute bottom-full left-0 z-[60] mb-2 w-72 opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto">
+                          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl flex flex-col gap-3">
+                            <div className="flex items-center gap-3">
+                              <Image
+                                src={team.teamLogo}
+                                alt={`${team.teamName} logo`}
+                                width={64}
+                                height={64}
+                                className="h-16 w-16 flex-shrink-0 rounded-xl object-cover shadow-sm bg-slate-100"
+                                unoptimized
+                              />
+                              <div>
+                                <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                                  {team.teamName}
+                                </h4>
+                                {team.teamSlogan && (
+                                  <p className="text-xs italic text-slate-500 mt-1 line-clamp-2">
+                                    "{team.teamSlogan}"
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="border-t border-slate-100 pt-3">
+                              <h5 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                Team Members
+                              </h5>
+                              <ul className="max-h-[50vh] overflow-y-auto space-y-1.5 pr-1">
+                                <li className="flex items-center gap-2 text-xs">
+                                  <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[8px] font-bold text-indigo-700">
+                                    L
+                                  </span>
+                                  <span className="font-semibold text-slate-700 truncate">
+                                    {team.leader.fullName}
+                                  </span>
+                                </li>
+                                {team.members.map((member, i) => (
+                                  <li key={i} className="flex items-center gap-2 text-xs">
+                                    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-[8px] font-bold text-slate-500">
+                                      M
+                                    </span>
+                                    <span className="text-slate-600 truncate">
+                                      {member.fullName}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
                     <td className="py-3 text-slate-700">
                       {team.leader.fullName}
                     </td>

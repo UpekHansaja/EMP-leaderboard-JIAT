@@ -38,7 +38,6 @@ export async function POST(request: Request) {
       typeof body.teamSlogan !== "string" ||
       !isValidPerson(body.leader) ||
       !Array.isArray(body.members) ||
-      body.members.length > 7 ||
       !body.members.every(isValidPerson)
     ) {
       return NextResponse.json({ message: "Invalid team payload." }, { status: 400 });
