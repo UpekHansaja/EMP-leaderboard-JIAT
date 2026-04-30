@@ -408,10 +408,10 @@ export function AdminPanel() {
                     </td>
                     <td className="py-3 text-slate-700">{team.leader.fullName}</td>
                     <td className="py-3 text-indigo-700">
-                      <div className="group relative inline-block">
+                      <div className="group relative inline-block" tabIndex={0}>
                         <span className="cursor-help border-b border-dashed border-indigo-300 font-semibold text-lg">{team.teamMark}</span>
                         
-                        <div className="absolute bottom-full left-1/2 z-50 mb-2 w-56 -translate-x-1/2 opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto">
+                        <div className="absolute bottom-full left-1/2 z-50 mb-2 w-56 -translate-x-1/2 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus:pointer-events-auto">
                           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
                             <h4 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Recent Updates</h4>
                             {(!team.markLogs || team.markLogs.length === 0) ? (
