@@ -136,7 +136,7 @@ export function LeaderboardClient() {
               </div>
             </div>
             <p className="relative z-10 mt-6 text-3xl font-bold text-indigo-700">
-              {team.teamMark} pts
+              {team.teamMark.toLocaleString()} pts
             </p>
           </article>
         ))}
@@ -181,7 +181,7 @@ export function LeaderboardClient() {
                       {team.members.length + 1}
                     </td>
                     <td className="py-3 font-semibold text-indigo-700">
-                      {team.teamMark}
+                      {team.teamMark.toLocaleString()}
                     </td>
                   </tr>
                 ))}

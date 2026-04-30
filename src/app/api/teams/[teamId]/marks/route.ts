@@ -29,7 +29,10 @@ export async function PATCH(
 
     const updated = await TeamModel.findByIdAndUpdate(
       teamId,
-      { $inc: { teamMark: markDelta } },
+      { 
+        $inc: { teamMark: markDelta },
+        $push: { markLogs: { delta: markDelta, timestamp: new Date() } }
+      },
       { new: true }
     );
     if (!updated) {

@@ -25,6 +25,15 @@ const teamSchema = new Schema(
         message: "Each team must have at most 7 members.",
       },
     },
+    markLogs: {
+      type: [
+        {
+          delta: { type: Number, required: true },
+          timestamp: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,

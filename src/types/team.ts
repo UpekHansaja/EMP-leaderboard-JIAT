@@ -13,6 +13,7 @@ export type Team = {
   teamMark: number;
   leader: PersonInfo;
   members: PersonInfo[];
+  markLogs?: { delta: number; timestamp: string }[];
   createdAt: string;
   updatedAt: string;
 };
