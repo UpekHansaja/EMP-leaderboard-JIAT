@@ -6,6 +6,26 @@ import Image from "next/image";
 import gsap from "gsap";
 import type { Team } from "@/types/team";
 import { Crown } from "lucide-react";
+import confetti from "canvas-confetti";
+
+const triggerConfetti = (index: number, x: number, y: number) => {
+  const config = { gravity: 0.6, ticks: 300, scalar: 1.2, zIndex: 100 };
+  if (index === 0) {
+    const colors = ['#facc15', '#4f46e5', '#818cf8', '#ffffff', '#ef4444', '#10b981'];
+    const pop = () => confetti({ ...config, particleCount: 80, spread: 80, origin: { x, y }, colors });
+    pop();
+    setTimeout(pop, 250);
+    setTimeout(pop, 500);
+  } else if (index === 1) {
+    const colors = ['#cbd5e1', '#94a3b8', '#64748b', '#475569', '#f8fafc'];
+    const pop = () => confetti({ ...config, particleCount: 50, spread: 60, origin: { x, y }, colors });
+    pop();
+    setTimeout(pop, 250);
+  } else if (index === 2) {
+    const colors = ['#d97706', '#b45309', '#f59e0b', '#78350f'];
+    confetti({ ...config, particleCount: 40, spread: 50, origin: { x, y }, colors });
+  }
+};
 
 export function LeaderboardClient() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -56,6 +76,18 @@ export function LeaderboardClient() {
         ease: "power3.out",
       },
     );
+
+    const timer = setTimeout(() => {
+      Array.from(cards).forEach((card, index) => {
+        if (index > 2) return;
+        const rect = card.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth;
+        const y = (rect.top + rect.height / 2) / window.innerHeight;
+        triggerConfetti(index, x, y);
+      });
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, [teams, isLoading]);
 
   const topThree = useMemo(() => teams.slice(0, 3), [teams]);
@@ -101,6 +133,12 @@ export function LeaderboardClient() {
           <article
             key={team._id}
             data-card
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = (rect.left + rect.width / 2) / window.innerWidth;
+              const y = (rect.top + rect.height / 2) / window.innerHeight;
+              triggerConfetti(index, x, y);
+            }}
             className="group relative rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-lg backdrop-blur"
           >
             {/* Crown Icon */}
