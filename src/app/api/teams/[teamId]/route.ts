@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
 import { TeamModel } from "@/models/Team";
 import { ADMIN_COOKIE_NAME, verifyAdminCookieValue } from "@/lib/admin-auth";
+import { pusherServer } from "@/lib/pusher";
 
 const REQUIRED_PERSON_FIELDS = ["fullName", "nic", "contactNo", "email"] as const;
 
@@ -64,6 +65,14 @@ export async function PUT(
       return NextResponse.json({ message: "Team not found." }, { status: 404 });
     }
 
+    try {
+      await pusherServer.trigger("leaderboard", "team-updated", { 
+        teamId: updatedTeam._id 
+      });
+    } catch (pusherError) {
+      console.error("Pusher error:", pusherError);
+    }
+
     return NextResponse.json(updatedTeam);
   } catch (error) {
     const isDuplicateName =
@@ -99,6 +108,14 @@ export async function DELETE(
     const deletedTeam = await TeamModel.findByIdAndDelete(teamId);
     if (!deletedTeam) {
       return NextResponse.json({ message: "Team not found." }, { status: 404 });
+    }
+
+    try {
+      await pusherServer.trigger("leaderboard", "team-deleted", { 
+        teamId 
+      });
+    } catch (pusherError) {
+      console.error("Pusher error:", pusherError);
     }
 
     return NextResponse.json({ message: "Team deleted successfully." });

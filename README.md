@@ -38,6 +38,12 @@ Then update `.env` with:
 - `ADMIN_USERNAME`=username
 - `ADMIN_PASSWORD`=password
 
+- Pusher credentials
+- `PUSHER_APP_ID`=app_id
+- `NEXT_PUBLIC_PUSHER_KEY`=public_key
+- `PUSHER_SECRET`=secret
+- `NEXT_PUBLIC_PUSHER_CLUSTER`=cluster
+
 1. Run dev server:
 
 ```bash

@@ -7,6 +7,7 @@ import gsap from "gsap";
 import type { Team } from "@/types/team";
 import { Crown } from "lucide-react";
 import confetti from "canvas-confetti";
+import Pusher from "pusher-js";
 
 const triggerConfetti = (index: number, x: number, y: number) => {
   const config = { gravity: 0.6, ticks: 300, scalar: 1.2, zIndex: 100 };
@@ -56,6 +57,40 @@ export function LeaderboardClient() {
     };
 
     fetchTeams();
+
+    // Set up Pusher real-time updates
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+
+    if (pusherKey && pusherCluster) {
+      const pusher = new Pusher(pusherKey, {
+        cluster: pusherCluster,
+      });
+
+      const channel = pusher.subscribe("leaderboard");
+      
+      const handleUpdate = () => {
+        // We only want to refetch, avoid setting isLoading to true so UI doesn't flicker
+        fetch("/api/teams", { cache: "no-store" })
+          .then((res) => res.json())
+          .then((data) => {
+            if (Array.isArray(data)) {
+              setTeams(data);
+            }
+          })
+          .catch((err) => console.error("Failed to update teams from Pusher event", err));
+      };
+
+      channel.bind("marks-updated", handleUpdate);
+      channel.bind("team-updated", handleUpdate);
+      channel.bind("team-deleted", handleUpdate);
+
+      return () => {
+        channel.unbind_all();
+        channel.unsubscribe();
+        pusher.disconnect();
+      };
+    }
   }, []);
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { TeamModel } from "@/models/Team";
+import { pusherServer } from "@/lib/pusher";
 
 const REQUIRED_PERSON_FIELDS = ["fullName", "nic", "contactNo", "email"] as const;
 
@@ -53,6 +54,14 @@ export async function POST(request: Request) {
       members: body.members,
       teamMark: 0,
     });
+
+    try {
+      await pusherServer.trigger("leaderboard", "team-updated", { 
+        teamId: createdTeam._id 
+      });
+    } catch (pusherError) {
+      console.error("Pusher error:", pusherError);
+    }
 
     return NextResponse.json(createdTeam, { status: 201 });
   } catch (error) {

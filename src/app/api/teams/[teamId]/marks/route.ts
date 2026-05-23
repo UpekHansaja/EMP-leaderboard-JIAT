@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
 import { TeamModel } from "@/models/Team";
 import { ADMIN_COOKIE_NAME, verifyAdminCookieValue } from "@/lib/admin-auth";
+import { pusherServer } from "@/lib/pusher";
 
 export async function PATCH(
   request: NextRequest,
@@ -37,6 +38,16 @@ export async function PATCH(
     );
     if (!updated) {
       return NextResponse.json({ message: "Team not found." }, { status: 404 });
+    }
+
+    // Trigger real-time update
+    try {
+      await pusherServer.trigger("leaderboard", "marks-updated", { 
+        teamId, 
+        updatedMark: updated.teamMark 
+      });
+    } catch (pusherError) {
+      console.error("Pusher error:", pusherError);
     }
 
     return NextResponse.json(updated);
