@@ -71,7 +71,7 @@ export function LeaderboardClient() {
       
       const handleUpdate = () => {
         // We only want to refetch, avoid setting isLoading to true so UI doesn't flicker
-        fetch("/api/teams", { cache: "no-store" })
+        fetch(`/api/teams?_t=${Date.now()}`, { cache: "no-store" })
           .then((res) => res.json())
           .then((data) => {
             if (Array.isArray(data)) {
