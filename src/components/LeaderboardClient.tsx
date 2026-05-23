@@ -234,7 +234,7 @@ export function LeaderboardClient() {
                                 </h4>
                                 {team.teamSlogan && (
                                   <p className="text-xs italic text-slate-500 mt-1 line-clamp-2">
-                                    "{team.teamSlogan}"
+                                    &quot;{team.teamSlogan}&quot;
                                   </p>
                                 )}
                               </div>

@@ -256,6 +256,7 @@ export function AdminPanel() {
     let payload;
 
     if (selectedTeam._id === "new") {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _id, ...teamData } = selectedTeam;
       response = await fetch("/api/teams", {
         method: "POST",
